@@ -6,20 +6,40 @@
 	<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=true&libraries=places"></script>
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 	<style type="text/css">
-
-	#map { width: 940px; height: 500px; }
-
+		body { width: 100%; }
+		.container { width: 940px; margin: 10px auto; }
+		.container #map { width: 740px; height: 400px; display: inline-block; }
+		.container #poi-list { width: 200px; display: inline-block; list-style: none; }
 	</style>
 </head>
 
 <body>
-<div id="map"></div>
+<div class="container">
+	<div id="map"></div>
+	<ul id="poi-list">
+		<li><input type="checkbox" value="restaurant" name="poi-item">Restaurante / Lanchonete</li>
+		<li><input type="checkbox" value="entertainment" name="poi-item">Entretenimento</li>
+		<li><input type="checkbox" value="services" name="poi-item">Serviços / Conveniência</li>
+		<li><input type="checkbox" value="education" name="poi-item">Escolas /</li>
+		<li><input type="checkbox" value="store" name="poi-item">Supermercados / Shopping</li>
+		<li><input type="checkbox" value="health" name="poi-item">Saúde</li>
+	</ul>
+</div>
+
 
 <script type="text/javascript">
 $(function() {
 	var defaultLocation = new google.maps.LatLng(-23.610586, -46.735392);
 	var	gMap;
 	var	placesService;
+	var placesTypes = {
+		'restaurant' : ['restaurant', 'cafe', 'food', 'bakery'],
+		'entertainment' : ['bar', 'gym', 'park', 'movie_rental'],
+		'services': ['bank', 'atm', 'convenience_store', 'subway_station', 'taxi_stand'],
+		'education': ['university', 'school'],
+		'store': ['grocery_or_supermarket', 'department_store', 'shopping_mall'],
+		'health': ['health', 'pharmacy', 'hospital']
+	};
 
 	var initialize = function(location) {
 		gMap = new google.maps.Map($('#map')[0], {
@@ -30,46 +50,36 @@ $(function() {
 
 		placesService = new google.maps.places.PlacesService(gMap);
 
-		drawPOI(location);
-
 		// event listeners
-		google.maps.event.addListener(gMap, 'dragend', function() {
-			newLocation = gMap.getBounds().getCenter();
-			initialize(new google.maps.LatLng(newLocation.Xa, newLocation.Ya));
-		});
+		// google.maps.event.addListener(gMap, 'dragend', function() {
+		// 	newLocation = gMap.getBounds().getCenter();
+		// 	// initialize(new google.maps.LatLng(newLocation.Xa, newLocation.Ya));
+		// 	drawPOI(newLocation);
+		// });
 	};
 
-	// var refreshMap = function(location) {
-	// 	gMap = new google.maps.Map($('#map')[0], {
-	// 		mapTypeId: google.maps.mapTypeId.ROADMAP,
-	// 		center: location,
-	// 		zoom: 15
-	// 	});
-	// }
-
-	var drawPOI = function(location) {
-		var types = ['grocery_or_supermarket', 'atm', 'bakery', 'bank', 'bar', 'cafe', 'convenience_store', 'department_store', 'food', 'gym', 'health', 'park', 'pharmacy', 'restaurant', 'shopping_mall', 'subway_station', 'taxi_stand', 'movie_rental', 'liquor_store'];
+	var drawPOI = function(location, types) {
 		var	destinations = [];
 		var	uniq = [];
 
-		for (var i = 0, max = types.length; i < max; i += 1) {
+		if (types.length > 0) {
 			placesService.search({
 				location: location,
 				radius: 500,
-				types: [types[i]]
+				types: types
 			}, function(results, status) {
 				if (status === google.maps.places.PlacesServiceStatus.OK) {
 					for (var i = 0, max = results.length; i < max; i += 1) {
 						var loc = results[i].geometry.location;
 						var	key = loc.Xa + ',' + loc.Ya;
 
+						
 						if (typeof(uniq[key]) == 'undefined') {
 							uniq[key] = 1;
 							destinations.push(loc);
 
 							var marker = new google.maps.Marker({
 								clickable: true,
-								// icon: results[i].icon,
 								icon: 'http://labs.google.com/ridefinder/images/mm_20_red.png',
 								map: gMap,
 								position: results[i].geometry.location,
@@ -80,9 +90,22 @@ $(function() {
 				}
 			});
 		}
+
+		return false;
 	};
 
 	initialize(defaultLocation);
+
+	// poi filter change event listener
+	$('[name="poi-item"]').on('change', function() {
+		var types = [];
+		
+		$.each($('[name="poi-item"]:checked'), function(key, item) {
+			types = types.concat(placesTypes[$(item).val()]);
+		});
+
+		drawPOI(defaultLocation, types);
+	});
 });
 </script>
 </body>
