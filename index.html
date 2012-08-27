@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>GMaps POI</title>
+	<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=true&libraries=places"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<style type="text/css">
+
+	#map { width: 940px; height: 500px; }
+
+	</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script type="text/javascript">
+$(function() {
+	var defaultLocation = new google.maps.LatLng(-23.610586, -46.735392);
+	var	gMap;
+	var	placesService;
+
+	var initialize = function(location) {
+		gMap = new google.maps.Map($('#map')[0], {
+			mapTypeId: google.maps.MapTypeId.ROADMAP,
+			center: location,
+			zoom: 15
+		});
+
+		placesService = new google.maps.places.PlacesService(gMap);
+
+		drawPOI(location);
+
+		// event listeners
+		google.maps.event.addListener(gMap, 'dragend', function() {
+			newLocation = gMap.getBounds().getCenter();
+			initialize(new google.maps.LatLng(newLocation.Xa, newLocation.Ya));
+		});
+	};
+
+	// var refreshMap = function(location) {
+	// 	gMap = new google.maps.Map($('#map')[0], {
+	// 		mapTypeId: google.maps.mapTypeId.ROADMAP,
+	// 		center: location,
+	// 		zoom: 15
+	// 	});
+	// }
+
+	var drawPOI = function(location) {
+		var types = ['grocery_or_supermarket', 'atm', 'bakery', 'bank', 'bar', 'cafe', 'convenience_store', 'department_store', 'food', 'gym', 'health', 'park', 'pharmacy', 'restaurant', 'shopping_mall', 'subway_station', 'taxi_stand', 'movie_rental', 'liquor_store'];
+		var	destinations = [];
+		var	uniq = [];
+
+		for (var i = 0, max = types.length; i < max; i += 1) {
+			placesService.search({
+				location: location,
+				radius: 500,
+				types: [types[i]]
+			}, function(results, status) {
+				if (status == google.maps.places.PlacesServiceStatus.OK) {
+					for (var i = 0, max = results.length; i < max; i += 1) {
+						var loc = results[i].geometry.location;
+						var	key = loc.Xa + ',' + loc.Ya;
+
+						if (typeof(uniq[key]) == 'undefined') {
+							uniq[key] = 1;
+							destinations.push(loc);
+
+							var marker = new google.maps.Marker({
+								clickable: true,
+								// icon: results[i].icon,
+								icon: 'http://labs.google.com/ridefinder/images/mm_20_red.png',
+								map: gMap,
+								position: results[i].geometry.location,
+								title: results[i].name
+							});
+						}
+					}
+				}
+			});
+		}
+	};
+
+	initialize(defaultLocation);
+});
+</script>
+</body>
+</html>
