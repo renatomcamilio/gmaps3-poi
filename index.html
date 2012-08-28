@@ -32,6 +32,7 @@ $(function() {
 	var defaultLocation = new google.maps.LatLng(-23.610586, -46.735392);
 	var	gMap;
 	var	placesService;
+	var	mapMarkers = [];
 	var placesTypes = {
 		'restaurant' : ['restaurant', 'cafe', 'food', 'bakery'],
 		'entertainment' : ['bar', 'gym', 'park', 'movie_rental'],
@@ -58,9 +59,19 @@ $(function() {
 		// });
 	};
 
+	var clearMapMarkers = function() {
+		if (mapMarkers.length > 0) {
+			for (var i = 0, max = mapMarkers.length; i < max; i += 1) {
+				mapMarkers[i].setMap(null);
+			}
+		}
+	};
+
 	var drawPOI = function(location, types) {
 		var	destinations = [];
 		var	uniq = [];
+
+		clearMapMarkers();
 
 		if (types.length > 0) {
 			placesService.search({
@@ -78,13 +89,13 @@ $(function() {
 							uniq[key] = 1;
 							destinations.push(loc);
 
-							var marker = new google.maps.Marker({
+							mapMarkers.push(new google.maps.Marker({
 								clickable: true,
 								icon: 'http://labs.google.com/ridefinder/images/mm_20_red.png',
 								map: gMap,
 								position: results[i].geometry.location,
 								title: results[i].name
-							});
+							}));
 						}
 					}
 				}
